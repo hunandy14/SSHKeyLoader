@@ -22,6 +22,7 @@ function Add-SSHKeyToServer {
     if ($Path) {
         [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
         $Path = [IO.Path]::GetFullPath($Path)
+        if (!(Test-Path -PathType:Leaf $Path)) { Write-Error "Error:: Path `"$Path`" does not exist" -ErrorAction:Stop }
         $PubKeyContent = Get-Content $Path
     }
     
