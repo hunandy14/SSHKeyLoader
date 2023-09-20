@@ -35,7 +35,7 @@ function Add-SSHKeyToServer {
         $SearchContent = [regex]::Escape($SearchContent)
         
         # 上傳公鑰
-        ssh $User@$HostName "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr """$SearchContent""" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr """/C:$SearchContent""" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
+        ssh $User@$HostName "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr """$SearchContent""" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr """$SearchContent""" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
         Write-Host "$PubKeyContent" -ForegroundColor DarkGray
         
         # 成功信息
@@ -45,5 +45,6 @@ function Add-SSHKeyToServer {
 # Add-SSHKeyToServer sftp 192.168.3.123 $env:USERPROFILE\.ssh\id_ed25519.pub
 # Add-SSHKeyToServer administrator 192.168.3.123 $env:USERPROFILE\.ssh\id_ed25519.pub
 # Add-SSHKeyToServer administrator 192.168.3.123 $env:USERPROFILE\.ssh\id_rsa.pub
+# Add-SSHKeyToServer sftp 192.168.3.123 $env:USERPROFILE\.ssh\id_rsa.pub
 # Add-SSHKeyToServer sftp 192.168.3.123 -PubKeyContent (Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub)
 # Add-SSHKeyToServer sftp 192.168.3.123
