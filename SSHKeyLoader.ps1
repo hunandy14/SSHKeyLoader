@@ -1,29 +1,30 @@
 # 上傳公鑰
 function Add-SSHKeyToServer {
-    [CmdletBinding(DefaultParameterSetName = "Path")]
+    [CmdletBinding(DefaultParameterSetName = "PubKeyPath")]
     param (
         [Parameter(Position=0, ParameterSetName="", Mandatory)]
         [string] $User,
         [Parameter(Position=1, ParameterSetName="", Mandatory)]
         [string] $HostName,
-        [Parameter(Position=2, ParameterSetName="Path")]
-        [string] $Path,
+        [Parameter(Position=2, ParameterSetName="PubKeyPath")]
+        [string] $PubKeyPath,
         [Parameter(ParameterSetName="PubKeyContent")]
         [string] $PubKeyContent
     )
     
     # 新增金鑰
-    if (!$Path -and !$PubKeyContent) {
-        $Path = "$env:USERPROFILE\.ssh\id_ed25519.pub"
-        if (!(Test-Path $Path -PathType Leaf)) { ssh-keygen -t ed25519 -f $Path }
+    if (!$PubKeyPath -and !$PubKeyContent) {
+        $prvKey = "$env:USERPROFILE\.ssh\id_ed25519"
+        if (!(Test-Path $prvKey -PathType Leaf)) { ssh-keygen -t ed25519 -f $prvKey }
+        $PubKeyPath = "$prvKey.pub"
     }
     
     # 處理路徑
-    if ($Path) {
+    if ($PubKeyPath) {
         [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
-        $Path = [IO.Path]::GetFullPath($Path)
-        if (!(Test-Path -PathType:Leaf $Path)) { Write-Error "Error:: Path `"$Path`" does not exist" -ErrorAction:Stop }
-        $PubKeyContent = Get-Content $Path
+        $PubKeyPath = [IO.Path]::GetFullPath($PubKeyPath)
+        if (!(Test-Path -PathType:Leaf $PubKeyPath)) { Write-Error "Error:: Path `"$PubKeyPath`" does not exist" -ErrorAction:Stop }
+        $PubKeyContent = Get-Content $PubKeyPath
     }
     
     # 上傳公鑰
