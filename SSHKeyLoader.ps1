@@ -2,16 +2,25 @@
 function Add-SSHKeyToServer {
     [CmdletBinding(DefaultParameterSetName = "PubKeyPath")]
     param (
-        [Parameter(Position=0, ParameterSetName="", Mandatory)]
-        [string] $User,
-        [Parameter(Position=1, ParameterSetName="", Mandatory)]
-        [string] $HostName,
-        [Parameter(Position=2, ParameterSetName="PubKeyPath")]
+        # 連接資訊
+        [Parameter(Position=0, Mandatory)]
+        [string] $LoginInfo,
+        # 公鑰
+        [Parameter(Position=1, ParameterSetName="PubKeyPath")]
         [string] $PubKeyPath,
         [Parameter(ParameterSetName="PubKeyContent")]
-        [string] $PubKeyContent
+        [string] $PubKeyContent,
+        # 連接埠
+        [Parameter(ParameterSetName="")]
+        [int] $Port = 22
     )
     
+    # 解析 LoginInfo
+    $UserName, $HostName = $LoginInfo -split '@', 2
+    if (-not $UserName -or -not $HostName) {
+        Write-Error "Error:: Invalid LoginInfo format. It should be in 'UserName@HostName' format." -ErrorAction:Stop
+    }
+
     # 新增金鑰
     if (!$PubKeyPath -and !$PubKeyContent) {
         $prvKey = "$env:USERPROFILE\.ssh\id_ed25519"
@@ -35,16 +44,16 @@ function Add-SSHKeyToServer {
         $SearchContent = [regex]::Escape($SearchContent)
         
         # 上傳公鑰
-        ssh $User@$HostName "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr """$SearchContent""" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr """$SearchContent""" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
+        ssh $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr """$SearchContent""" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr """$SearchContent""" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
         Write-Host "$PubKeyContent" -ForegroundColor DarkGray
         
         # 成功信息
-        ssh -o BatchMode=yes $User@$HostName "echo Upload successful. Now connected to $User@$HostName"
+        ssh -o BatchMode=yes $LoginInfo "echo Upload successful. Now connected to $LoginInfo"
     }
 }
-# Add-SSHKeyToServer sftp 192.168.3.123 $env:USERPROFILE\.ssh\id_ed25519.pub
-# Add-SSHKeyToServer administrator 192.168.3.123 $env:USERPROFILE\.ssh\id_ed25519.pub
-# Add-SSHKeyToServer administrator 192.168.3.123 $env:USERPROFILE\.ssh\id_rsa.pub
-# Add-SSHKeyToServer sftp 192.168.3.123 $env:USERPROFILE\.ssh\id_rsa.pub
-# Add-SSHKeyToServer sftp 192.168.3.123 -PubKeyContent (Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub)
-# Add-SSHKeyToServer sftp 192.168.3.123
+# Add-SSHKeyToServer administrator@192.168.3.123 $env:USERPROFILE\.ssh\id_ed25519.pub
+# Add-SSHKeyToServer administrator@192.168.3.123 $env:USERPROFILE\.ssh\id_rsa.pub
+# Add-SSHKeyToServer sftp@192.168.3.123 $env:USERPROFILE\.ssh\id_ed25519.pub
+# Add-SSHKeyToServer sftp@192.168.3.123 $env:USERPROFILE\.ssh\id_rsa.pub
+# Add-SSHKeyToServer sftp@192.168.3.123 -PubKeyContent (Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub)
+# Add-SSHKeyToServer sftp@192.168.3.123
