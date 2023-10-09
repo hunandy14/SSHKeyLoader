@@ -151,11 +151,9 @@ function AvtivateSSHKeyAuth {
     
     # 上傳公鑰到伺服器
     if (!(Test-SSHKey $LoginInfo $PrvKeyPath $KnwHostPath)) {
-        # $PrvKey    = "-i $PrvKeyPath"
-        $PrvKey    = "-o IdentityFile=`"$PrvKeyPath`""
-        $KnwHost   = "-o UserKnownHostsFile=`"$KnwHostPath`""
-        $optionCmd = @($PrvKey, $KnwHost) |Where-Object { $_ }
-        Add-SSHKeyToServer $LoginInfo -PubKeyContent $PubKeyContent -OptionCmd:$optionCmd
+        $PrvKey  = "-o IdentityFile=`"$PrvKeyPath`""
+        $KnwHost = "-o UserKnownHostsFile=`"$KnwHostPath`""
+        Add-SSHKeyToServer $LoginInfo -PubKeyContent $PubKeyContent -OptionCmd @($PrvKey, $KnwHost)
     }
     
     # 確認連接
