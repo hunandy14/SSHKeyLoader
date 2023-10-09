@@ -126,6 +126,9 @@ $remotePowershell = "powershell New-Item -Force -ItemType Directory -Path `$env:
 # Connect to your server and run the PowerShell using the $remotePowerShell variable
 ssh sftp@192.168.3.123 $remotePowershell
 
+# Test Connect
+ssh -i "$env:USERPROFILE\.ssh\id_ed25519" -o BatchMode=yes sftp@192.168.3.123 "echo Connect successful."
+
 
 ```
 
