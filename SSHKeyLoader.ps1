@@ -20,13 +20,6 @@ function Add-SSHKeyToServer {
     if (-not $UserName -or -not $HostName) {
         Write-Error "Error:: Invalid LoginInfo format. It should be in 'UserName@HostName' format." -ErrorAction:Stop
     }
-
-    # 新增金鑰
-    # if (!$PubKeyPath -and !$PubKeyContent) {
-    #     $prvKey = "$env:USERPROFILE\.ssh\id_ed25519"
-    #     if (!(Test-Path $prvKey -PathType Leaf)) { ssh-keygen -t ed25519 -f $prvKey }
-    #     $PubKeyPath = "$prvKey.pub"
-    # }
     
     # 處理公鑰路徑
     if ($PubKeyPath) {
@@ -34,11 +27,6 @@ function Add-SSHKeyToServer {
         if (!(Test-Path -PathType:Leaf $PubKeyPath)) { Write-Error "Error:: Path `"$PubKeyPath`" does not exist" -ErrorAction:Stop }
         $PubKeyContent = Get-Content $PubKeyPath
     }
-    # 處理伺服器名單路徑
-    # if ($KnwHostPath) {
-    #     $KnwHostPath = [IO.Path]::GetFullPath($KnwHostPath)
-    #     $KnwHost = "-o UserKnownHostsFile=$KnwHostPath"
-    # }
     
     # 上傳公鑰
     if ($PubKeyContent) {
@@ -49,18 +37,12 @@ function Add-SSHKeyToServer {
         
         # 上傳公鑰
         Write-Host "Public Key Content: $PubKeyContent" -ForegroundColor DarkGray
-        # Write-Host "==========================================="
         ssh @OptionCmd $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr """$SearchContent""" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr """$SearchContent""" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
-        # Write-Host "==========================================="
-        
         if($?) {
             Write-Host "Successfully uploaded the public key to host '$HostName'." -ForegroundColor Green
         } else {
             Write-Error "Failed to obtain the public key for host '$HostName'" -ErrorAction Stop
         }
-        
-        # 成功信息
-        # ssh -o BatchMode=yes $LoginInfo "echo Upload successful. Now connected to $LoginInfo"
     }
 }
 # Add-SSHKeyToServer administrator@192.168.3.123 $env:USERPROFILE\.ssh\id_ed25519.pub
@@ -70,72 +52,6 @@ function Add-SSHKeyToServer {
 # Add-SSHKeyToServer sftp@192.168.3.123 -PubKeyContent (Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub)
 # Add-SSHKeyToServer sftp@192.168.3.123 -PubKeyContent (Get-Content id_ed25519.pub)
 # Add-SSHKeyToServer sftp@192.168.3.123 id_ed25519.pub -KnwHostPath known_hosts
-
-$LoginInfo = "sftp@192.168.3.123"
-$PubKeyContent = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK88KCUQtA+ZS3Xk02h3HFev/iyY34aEex0EHRpm5vPz hunan@Kaede-LT"
-$PrvKeyPath = "C:\Users\hunan\OneDrive\Git Repository\pwshApp\SSHKeyLoader\id_ed25519"
-$KnwHostPath = "C:\Users\hunan\OneDrive\Git Repository\pwshApp\SSHKeyLoader\known_hosts"
-$KnwHost   = "-o UserKnownHostsFile=$KnwHostPath"
-$PrvKey    = "-o IdentityFile=$PrvKeyPath"
-$optionCmd = @(
-    $PrvKey,
-    $KnwHost
-)
-# Add-SSHKeyToServer $LoginInfo -PubKeyContent $PubKeyContent -OptionCmd $optionCmd
-# ssh @optionCmd $LoginInfo "echo XXXXXXXXXXXXXXXXXXXX"
-
-
-
-
-# ssh $optionCmd $LoginInfo "echo GHGGGGG"
-
-$LoginInfo = "sftp@192.168.3.123"
-$PrvKeyPath = "C:\Users\hunan\OneDrive\Git Repository\pwshApp\SSHKeyLoader\id_ed25519"
-$KnwHostPath = "C:\Users\hunan\OneDrive\Git Repository\pwshApp\SSHKeyLoader\known_hosts"
-$KnwHost   = "-o UserKnownHostsFile=$KnwHostPath"
-$PrvKey    = "-o IdentityFile=$PrvKeyPath"
-# $PrvKey    = "-i $PrvKeyPath"
-# $optionCmd += $PrvKey+$KnwHost |Where-Object { $_ }
-# $KnwHost
-# $optionCmd = @($PrvKey) |Where-Object { $_ }
-# ssh @OptionCmd $LoginInfo "echo GHGGGGG"
-# # ssh @optionCmd $LoginInfo "echo GHGGGGG"
-
-$OptionCmd = @(
-    # "-i", "$PrvKeyPath",
-    "-o UserKnownHostsFile=`"$KnwHostPath`"",
-    "-o IdentityFile=`"$PrvKeyPath`""
-)
-# ssh @optionCmd $LoginInfo "echo GHGGGGG"
-# Add-SSHKeyToServer $LoginInfo -PubKeyContent $PubKeyContent -OptionCmd $optionCmd
-
-
-
-# function Generate-SSHOptions {
-#     param (
-#         [hashtable]$Params
-#     )
-#     $obj = (($Params.GetEnumerator()) | ForEach-Object { 
-#         $value = $_.Value; $key = $_.Key
-#         if ($value -is [array]) {
-#             $value | ForEach-Object { "$key $_" }
-#         } else { "$key `"$value`"" }
-#     }) -join ' '
-    
-    
-#     return $obj
-# }
-# $PrvKeyPath = "C:\Users\hunan\OneDrive\Git Repository\pwshApp\SSHKeyLoader\id_ed25519"
-# $KnwHostPath = "C:\Users\hunan\OneDrive\Git Repository\pwshApp\SSHKeyLoader\known_hosts"
-# $params = @{
-#     "-i" = $PrvKeyPath
-#     "-o" = @(
-#         "UserKnownHostsFile=`"$KnwHostPath`"",
-#         "IdentityFile=`"$PrvKeyPath`""
-#     )
-# }
-# $optionCmd = Generate-SSHOptions $params
-# ssh $optionCmd $LoginInfo "echo GHGGGGG"
 
 
 
@@ -150,6 +66,12 @@ function Test-SSHKey {
         [string] $KnwHostPath
     ) [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
     
+    # 解析 LoginInfo
+    $UserName, $HostName = $LoginInfo -split '@', 2
+    if (-not $UserName -or -not $HostName) {
+        Write-Error "Error:: Invalid LoginInfo format. It should be in 'UserName@HostName' format." -ErrorAction:Stop
+    }
+        
     # 私鑰預設位置
     if (!$PrvKeyPath) { $PrvKeyPath = "$env:USERPROFILE\.ssh\id_ed25519" }
     $PrvKeyPath = [IO.Path]::GetFullPath($PrvKeyPath)
@@ -165,7 +87,7 @@ function Test-SSHKey {
     } else {
         return $false
     }
-}
+} # Test-SSHKey sftp@192.168.3.123 id_ed25519 known_hosts
 
 
 
@@ -244,3 +166,4 @@ function AvtivateSSHKeyAuth {
 # AvtivateSSHKeyAuth "sftp@192.168.3.123"
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -OutKnwHost "known_hosts" -NoSalt
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt
+# AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt -GeneratePrvKey
