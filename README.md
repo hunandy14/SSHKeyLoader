@@ -6,17 +6,40 @@
 快速使用
 
 ```ps1
-irm bit.ly/3Zlkg2p|iex; Add-SSHKeyToServer UserName@192.168.3.123
+irm bit.ly/3Zlkg2p|iex; AvtivateSSHKeyAuth "sftp@192.168.3.123" -GeneratePrvKey
 ```
 
-> 已知問題  
-> 當初規劃的接口沒考慮完善，如果把私鑰建立在預設位置以外，會因為沒有讀到私鑰而顯示連接失敗  
-> 實際上公鑰已經上傳上去了，手動輸入私鑰也能連線，問題是出在函式並沒有讀取預設位置外的私鑰  
+> 產生新的金鑰並自動上傳到目標伺服器 (已經存在會詢問是否覆蓋)
+
 
 
 <br><br><br>
 
-詳細說明
+## 啟用私鑰授權
+```ps1
+# 載入函式
+irm bit.ly/3Zlkg2p|iex;
+
+# 啟用私鑰 (私鑰: 預設位置, 信任伺服器清單: 預設位置)
+AvtivateSSHKeyAuth "sftp@192.168.3.123"
+
+# 啟用私鑰並輸出未加鹽信任伺服器清單 (私鑰: 預設位置)
+AvtivateSSHKeyAuth "sftp@192.168.3.123" -OutKnwHost "known_hosts" -NoSalt
+
+# 啟用私鑰並輸出未加鹽信任伺服器清單
+AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt
+
+# 啟用私鑰並輸出未加鹽信任伺服器清單 (重新產生金鑰)
+AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt -GeneratePrvKey
+
+
+```
+
+
+
+<br><br><br>
+
+## 上傳Key到伺服器
 
 ```ps1
 # 載入函式
@@ -31,7 +54,10 @@ Add-SSHKeyToServer UserName@192.168.3.123 -PubKeyContent (gc "$env:USERPROFILE\.
 # 上傳公鑰 (變更連接埠)
 Add-SSHKeyToServer UserName@192.168.3.123 -Port 22
 
+
 ```
+
+> 有避開重複上傳的問題，重複執行不會重複追加
 
 
 
@@ -47,6 +73,7 @@ ssh-keygen -t ed25519  -f "$env:USERPROFILE\.ssh\id_ed25519" -N ""
 # 創建新金鑰(PEM格式舊程式通常要用這個)
 ssh-keygen -m PEM
 ssh-keygen -m PEM -f "$env:USERPROFILE\.ssh\id_rsa" -N ""
+
 
 ```
 
