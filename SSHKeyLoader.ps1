@@ -79,9 +79,13 @@ function Test-SSHKey {
     # 信任伺服器公鑰預設位置
     if (!$KnwHostPath) { $KnwHostPath = "$env:USERPROFILE\.ssh\known_hosts" }
     $KnwHostPath = [IO.Path]::GetFullPath($KnwHostPath)
+
+    # 組合選項值
+    if ($PrvKeyPath) { $PrvKey  = "-o IdentityFile=`"$PrvKeyPath`"" }
+    if ($KnwHostPath) { $KnwHost = "-o UserKnownHostsFile=`"$KnwHostPath`"" }
     
     # 測試連接
-    $result = ssh -i $PrvKeyPath -o UserKnownHostsFile=$KnwHostPath -o BatchMode=yes $LoginInfo "echo True" 2>$null
+    $result = ssh $PrvKey $KnwHost -o BatchMode=yes $LoginInfo "echo True" 2>$null
     if ($? -and ($result -eq "True")) {
         return $true
     } else {
@@ -107,7 +111,8 @@ function AvtivateSSHKeyAuth {
         # 其他選項
         [Parameter(ParameterSetName = "")]
         [string] $OutKnwHost,
-        [switch] $NoSalt
+        [switch] $NoSalt,
+        [switch] $Force # 強制上傳sshkey (已有其他私鑰的情況下不會被上傳第二個key)
     ) [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
     
     # 解析 LoginInfo
@@ -149,20 +154,24 @@ function AvtivateSSHKeyAuth {
         }
     }
     
+    # 組合選項值
+    if ($PrvKeyPath) { $PrvKey  = "-o IdentityFile=`"$PrvKeyPath`"" }
+    if ($KnwHostPath) { $KnwHost = "-o UserKnownHostsFile=`"$KnwHostPath`"" }
+
     # 上傳公鑰到伺服器
-    if (!(Test-SSHKey $LoginInfo $PrvKeyPath $KnwHostPath)) {
-        $PrvKey  = "-o IdentityFile=`"$PrvKeyPath`""
-        $KnwHost = "-o UserKnownHostsFile=`"$KnwHostPath`""
-        Add-SSHKeyToServer $LoginInfo -PubKeyContent $PubKeyContent -OptionCmd @($PrvKey, $KnwHost)
+    if (!(Test-SSHKey $LoginInfo $PrvKeyPath $KnwHostPath) -or $Force) {
+        $options = @($PrvKey, $KnwHost) | Where-Object { $_ }
+        Add-SSHKeyToServer $LoginInfo -PubKeyContent $PubKeyContent -OptionCmd $options
     }
     
     # 確認連接
-    $prvKeyName = [System.IO.Path]::GetFileName($PrvKeyPath)
-    $result = ssh -i $PrvKeyPath -o UserKnownHostsFile=$KnwHostPath -o BatchMode=yes $LoginInfo "echo SSH key '$prvKeyName' authentication is now activated."
+    $result = ssh $PrvKey $KnwHost -o BatchMode=yes $LoginInfo "echo SSH key '$PrvKeyPath' authentication is now activated."
     Write-Host $result -ForegroundColor Green
 }
 # AvtivateSSHKeyAuth "sftp@192.168.3.123"
+# AvtivateSSHKeyAuth "sftp@192.168.3.123" -GeneratePrvKey
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -OutKnwHost "known_hosts" -NoSalt
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt -GeneratePrvKey
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "Z:\sshkey\id_ed25519" -OutKnwHost "Z:\sshkey\known_hosts" -NoSalt -GeneratePrvKey
+# AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "Z:\sshkey\id_ed25519" -OutKnwHost "Z:\sshkey\known_hosts" -NoSalt -GeneratePrvKey -Force
