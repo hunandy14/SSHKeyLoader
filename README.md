@@ -106,3 +106,27 @@ cmd
 ```ps1
 icacls "D:\sshkey\id_rsa" /inheritance:r /grant:r "%username%:R"
 ```
+
+
+
+<br><br><br>
+
+## 最簡啟用KEY方法
+
+```ps1
+# Generating public/private ed25519 key pair
+ssh-keygen -t ed25519 -f $env:USERPROFILE\.ssh\id_ed25519
+
+# Get the public key file generated previously on your client
+$authorizedKey = Get-Content -Path $env:USERPROFILE\.ssh\id_ed25519.pub
+
+# Generate the PowerShell to be run remote that will copy the public key file generated previously on your client to the authorized_keys file on your server
+$remotePowershell = "powershell New-Item -Force -ItemType Directory -Path $env:USERPROFILE\.ssh; Add-Content -Force -Path $env:USERPROFILE\.ssh\authorized_keys -Value '$authorizedKey'"
+
+# Connect to your server and run the PowerShell using the $remotePowerShell variable
+ssh username@domain1@contoso.com $remotePowershell
+
+
+```
+
+- https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_keymanagement#standard-user
