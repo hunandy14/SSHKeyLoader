@@ -54,13 +54,13 @@ AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "kn
 irm bit.ly/3Zlkg2p|iex;
 
 # 上傳公鑰 (預設 ~\.ssh\id_ed25519.pub 可省略)
-Add-SSHKeyToServer UserName@192.168.3.123 -PubKeyPath "$env:USERPROFILE\.ssh\id_ed25519.pub"
+Add-SSHKeyToServer "sftp@192.168.3.123" -PubKeyPath "$env:USERPROFILE\.ssh\id_ed25519.pub"
 
 # 上傳公鑰 (直接輸入公鑰)
-Add-SSHKeyToServer UserName@192.168.3.123 -PubKeyContent (gc "$env:USERPROFILE\.ssh\id_ed25519.pub")
+Add-SSHKeyToServer "sftp@192.168.3.123" -PubKeyContent (gc "$env:USERPROFILE\.ssh\id_ed25519.pub")
 
 # 上傳公鑰 (變更連接埠)
-Add-SSHKeyToServer UserName@192.168.3.123 -Port 22
+Add-SSHKeyToServer "sftp@192.168.3.123" -Port 22
 
 
 ```
@@ -121,10 +121,10 @@ ssh-keygen -t ed25519 -f $env:USERPROFILE\.ssh\id_ed25519
 $authorizedKey = Get-Content -Path $env:USERPROFILE\.ssh\id_ed25519.pub
 
 # Generate the PowerShell to be run remote that will copy the public key file generated previously on your client to the authorized_keys file on your server
-$remotePowershell = "powershell New-Item -Force -ItemType Directory -Path $env:USERPROFILE\.ssh; Add-Content -Force -Path $env:USERPROFILE\.ssh\authorized_keys -Value '$authorizedKey'"
+$remotePowershell = "powershell New-Item -Force -ItemType Directory -Path `$env:USERPROFILE\.ssh; Add-Content -Force `$env:USERPROFILE\.ssh\authorized_keys '$authorizedKey'"
 
 # Connect to your server and run the PowerShell using the $remotePowerShell variable
-ssh username@domain1@contoso.com $remotePowershell
+ssh sftp@192.168.3.123 $remotePowershell
 
 
 ```
