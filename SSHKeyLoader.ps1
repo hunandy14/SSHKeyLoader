@@ -167,3 +167,4 @@ function AvtivateSSHKeyAuth {
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -OutKnwHost "known_hosts" -NoSalt
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt -GeneratePrvKey
+# AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "Z:\sshkey\id_ed25519" -OutKnwHost "Z:\sshkey\known_hosts" -NoSalt -GeneratePrvKey
