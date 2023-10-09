@@ -120,8 +120,8 @@ ssh-keygen -t ed25519 -f $env:USERPROFILE\.ssh\id_ed25519
 # Get the public key file generated previously on your client
 $authorizedKey = Get-Content -Path $env:USERPROFILE\.ssh\id_ed25519.pub
 
-# Generate the PowerShell to be run remote that will copy the public key file generated previously on your client to the authorized_keys file on your server
-$remotePowershell = "powershell New-Item -Force -ItemType Directory -Path `$env:USERPROFILE\.ssh; Add-Content -Force `$env:USERPROFILE\.ssh\authorized_keys '$authorizedKey'"
+# Generate PowerShell script to copy the client's public key to the server's authorized_keys.
+$remotePowershell = "(if not exist .ssh mkdir .ssh) && echo $authorizedKey >> .ssh\authorized_keys"
 
 # Connect to your server and run the PowerShell using the $remotePowerShell variable
 ssh sftp@192.168.3.123 $remotePowershell
