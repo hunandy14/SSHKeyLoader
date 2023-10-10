@@ -99,13 +99,15 @@ ssh-keygen -m PEM -f "$env:USERPROFILE\.ssh\id_rsa" -N ""
 
 powershell
 ```powershell
-icacls "D:\sshkey\id_rsa" /inheritance:r /grant:r "$($env:USERNAME):R"
+icacls ".\id_ed25519" /inheritance:r /remove *S-1-1-0 /grant *S-1-5-32-544:F /grant *S-1-5-18:F /grant "$($env:USERNAME):M"
 ```
 
 cmd
 ```ps1
-icacls "D:\sshkey\id_rsa" /inheritance:r /grant:r "%username%:R"
+icacls ".\id_ed25519" /inheritance:r /remove *S-1-1-0 /grant *S-1-5-32-544:F /grant *S-1-5-18:F /grant "%username%:R"
 ```
+
+> 要注意的是複製到使用者目錄以外的資料夾，會因為繼承的關係複製的當下權限繼承上一層資料夾  
 
 
 
