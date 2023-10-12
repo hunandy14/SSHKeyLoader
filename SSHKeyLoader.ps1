@@ -161,6 +161,7 @@ function AvtivateSSHKeyAuth {
     # 上傳公鑰到伺服器
     if (!(Test-SSHKey $LoginInfo $PrvKeyPath $KnwHostPath) -or $Force) {
         $options = @($PrvKey, $KnwHost) | Where-Object { $_ }
+        $options = $options | ForEach-Object { $_ -split ' ', 2 }
         Add-SSHKeyToServer $LoginInfo -PubKeyContent $PubKeyContent -OptionCmd $options
     }
     
