@@ -41,7 +41,7 @@ function Add-SSHKeyToServer {
         if($?) {
             Write-Host "Successfully uploaded the public key to host '$HostName'." -ForegroundColor Green
         } else {
-            Write-Error "Failed to obtain the public key for host '$HostName'" -ErrorAction Stop
+            Write-Error "Failed uploaded the public key to host '$HostName'." -ErrorAction Stop
         }
     }
 }
