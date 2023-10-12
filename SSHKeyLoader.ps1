@@ -121,6 +121,18 @@ function AvtivateSSHKeyAuth {
         Write-Error "Error:: Invalid LoginInfo format. It should be in 'UserName@HostName' format." -ErrorAction:Stop
     }
     
+    # 獲取伺服器端公鑰
+    if ($OutKnwHost) {
+        $knwHostPath = [IO.Path]::GetFullPath($OutKnwHost)
+        $result = ssh-keyscan $HostName 2>$null
+        if(!$?) {Write-Error "Failed to obtain the public key for host '$HostName'" -ErrorAction Stop}
+        $result | Set-Content $knwHostPath
+        if (!$NoSalt) {
+            ssh-keygen -H -f $knwHostPath 2>$null 1>$null
+            Remove-Item "$knwHostPath.old"
+        }
+    }
+    
     # 私鑰預設位置
     if (!$PrvKeyPath) { $PrvKeyPath = "$env:USERPROFILE\.ssh\id_ed25519" }
     $PrvKeyPath = [IO.Path]::GetFullPath($PrvKeyPath)
@@ -139,18 +151,6 @@ function AvtivateSSHKeyAuth {
             Write-Host ($PubKeyContent -join "`r`n")
             Write-Host ""
             Write-Error "Failed to extract the public key from private key at '$PrvKeyPath'" -ErrorAction Stop
-        }
-    }
-    
-    # 獲取伺服器端公鑰
-    if ($OutKnwHost) {
-        $knwHostPath = [IO.Path]::GetFullPath($OutKnwHost)
-        $result = ssh-keyscan $HostName 2>$null
-        if(!$?) {Write-Error "Failed to obtain the public key for host '$HostName'" -ErrorAction Stop}
-        $result | Set-Content $knwHostPath
-        if (!$NoSalt) {
-            ssh-keygen -H -f $knwHostPath 2>$null 1>$null
-            Remove-Item "$knwHostPath.old"
         }
     }
     
