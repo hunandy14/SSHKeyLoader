@@ -71,7 +71,7 @@ function Test-SSHKey {
     if (-not $UserName -or -not $HostName) {
         Write-Error "Error:: Invalid LoginInfo format. It should be in 'UserName@HostName' format." -ErrorAction:Stop
     }
-        
+    
     # 私鑰預設位置
     if (!$PrvKeyPath) { $PrvKeyPath = "$env:USERPROFILE\.ssh\id_ed25519" }
     $PrvKeyPath = [IO.Path]::GetFullPath($PrvKeyPath)
