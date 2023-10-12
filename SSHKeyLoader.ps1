@@ -125,7 +125,7 @@ function AvtivateSSHKeyAuth {
     if ($OutKnwHost) {
         $knwHostPath = [IO.Path]::GetFullPath($OutKnwHost)
         $result = ssh-keyscan $HostName 2>$null
-        if(!$?) {Write-Error "Failed to obtain the public key for host '$HostName'" -ErrorAction Stop}
+        if($LastExitCode -ne 0) { Write-Error "Failed to obtain the public key for host '$HostName'" -ErrorAction Stop }
         $result | Set-Content $knwHostPath
         if (!$NoSalt) {
             ssh-keygen -H -f $knwHostPath 2>$null 1>$null
