@@ -37,7 +37,7 @@ function Add-SSHKeyToServer {
         
         # 上傳公鑰
         Write-Host "Public Key Content: $PubKeyContent" -ForegroundColor DarkGray
-        ssh @OptionCmd $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr """$SearchContent""" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr """$SearchContent""" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
+        ssh @OptionCmd $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr `"$SearchContent`" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr `"$SearchContent`" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
         if($?) {
             Write-Host "Successfully uploaded the public key to host '$HostName'." -ForegroundColor Green
         } else {
