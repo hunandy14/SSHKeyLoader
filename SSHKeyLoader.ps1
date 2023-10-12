@@ -38,7 +38,7 @@ function Add-SSHKeyToServer {
         # 上傳公鑰
         Write-Host "Public Key Content: $PubKeyContent" -ForegroundColor DarkGray
         ssh @OptionCmd $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr `"$SearchContent`" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr `"$SearchContent`" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
-        if($?) {
+        if($LastExitCode -eq 0) {
             Write-Host "Successfully uploaded the public key to host '$HostName'." -ForegroundColor Green
         } else {
             Write-Error "Failed uploaded the public key to host '$HostName'." -ErrorAction Stop
@@ -86,7 +86,7 @@ function Test-SSHKey {
     
     # 測試連接
     $result = ssh $PrvKey $KnwHost -o BatchMode=yes $LoginInfo "echo True" 2>$null
-    if ($? -and ($result -eq "True")) {
+    if (($LastExitCode -eq 0) -and ($result -eq "True")) {
         return $true
     } else {
         return $false
@@ -139,19 +139,17 @@ function AvtivateSSHKeyAuth {
     # 生成私鑰
     if ($GeneratePrvKey) { ssh-keygen -t ed25519 -f $PrvKeyPath }
     # 私鑰路徑無效
-    if (!(Test-Path -PathType:Leaf $PrvKeyPath)) {
-        Write-Error "Error:: Path `"$PrvKeyPath`" does not exist" -ErrorAction:Stop
-    }
+    if (!(Test-Path -PathType:Leaf $PrvKeyPath)) { Write-Error "Error:: Path `"$PrvKeyPath`" does not exist" -ErrorAction:Stop }
     
     # 從私鑰獲取公鑰
-    if ($PrvKeyPath) {
-        if (!(Test-Path -PathType:Leaf $PrvKeyPath)) { Write-Error "Error:: Path `"$PrvKeyPath`" does not exist" -ErrorAction:Stop }
+    $PubKeyContent = ssh-keygen -y -f $PrvKeyPath 2>&1
+    if (($LastExitCode -ne 0) -and ($PubKeyContent -match "Permissions for .* are too open.")) {
+        icacls $PrvKeyPath /inheritance:r /remove *S-1-1-0 /grant *S-1-5-32-544:F /grant *S-1-5-18:F /grant "$($env:USERNAME):M" |Out-Null
         $PubKeyContent = ssh-keygen -y -f $PrvKeyPath 2>&1
-        if (!$?) {
-            Write-Host ($PubKeyContent -join "`r`n")
-            Write-Host ""
-            Write-Error "Failed to extract the public key from private key at '$PrvKeyPath'" -ErrorAction Stop
-        }
+    } if ($LastExitCode -ne 0) {
+        Write-Host ($PubKeyContent -join "`r`n")
+        Write-Host ""
+        Write-Error "Failed to extract the public key from private key at '$PrvKeyPath'" -ErrorAction Stop
     }
     
     # 組合選項值
