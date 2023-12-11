@@ -113,6 +113,16 @@ icacls ".\id_ed25519" /inheritance:r /remove *S-1-1-0 /grant *S-1-5-32-544:F /gr
 
 <br><br><br>
 
+## 從伺服器獲取伺服器公鑰
+
+```powershell
+ssh-keyscan 192.168.3.123
+```
+
+
+
+<br><br><br>
+
 ## 最簡啟用KEY方法
 
 ```ps1
