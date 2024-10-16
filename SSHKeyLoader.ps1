@@ -1,3 +1,49 @@
+# 執行命令
+function Invoke-CommandInfo {
+    [CmdletBinding()] [Alias("icm")]
+    Param(
+        [Parameter(Position = 0, Mandatory)]
+        [string]$FileName,
+        [Parameter(Position = 1, ValueFromRemainingArguments)]
+        [string[]]$Arguments
+    )
+    
+    Begin {
+        # 同步工作目錄
+        [IO.Directory]::SetCurrentDirectory(((Get-Location -PSProvider FileSystem).ProviderPath))
+        
+        # 建立 ProcessStartInfo 對象並配置
+        # Write-Host "Executing command: [$FileName], Arguments: [$($Arguments -join ', ')]" -BackgroundColor DarkGray -NoNewline; Write-Host ''
+        $processInfo = New-Object System.Diagnostics.ProcessStartInfo -Property @{
+            FileName = $FileName
+            Arguments = $Arguments
+            RedirectStandardOutput = $true
+            RedirectStandardError = $true
+            UseShellExecute = $false
+            CreateNoWindow = $true
+        }
+        
+        # 開始進程
+        try {
+            $process = New-Object System.Diagnostics.Process
+            $process.StartInfo = $processInfo
+            $process.Start() | Out-Null
+            $process.WaitForExit()
+        } catch {
+            throw
+        }
+        
+        # 返回包含標準輸出和標準錯誤的哈希表
+        return [ordered]@{
+            StdOutput = $process.StandardOutput.ReadToEnd()
+            StdError  = $process.StandardError.ReadToEnd()
+            ExitCode  = $process.ExitCode
+        }
+    }
+} # Invoke-CommandInfo ssh -oBatchMode=yes chg@192.168.3.31 "echo Hello! I am %USERNAME%"
+
+
+
 # 上傳公鑰
 function Add-SSHKeyToServer {
     [CmdletBinding(DefaultParameterSetName = "PubKeyPath")]
@@ -37,11 +83,15 @@ function Add-SSHKeyToServer {
         
         # 上傳公鑰
         Write-Host "Public Key Content: $PubKeyContent" -ForegroundColor DarkGray
-        ssh @OptionCmd $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr `"$SearchContent`" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr `"$SearchContent`" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
-        if($LastExitCode -eq 0) {
+        $process = Invoke-CommandInfo ssh @OptionCmd -oBatchMode=yes $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr `"$SearchContent`" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr `"$SearchContent`" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
+        if($process.ExitCode -eq 0) {
             Write-Host "Successfully uploaded the public key to host '$HostName'." -ForegroundColor Green
         } else {
-            Write-Error "Failed uploaded the public key to host '$HostName'." -ErrorAction Stop
+            if ($process.StdError) {
+                Write-Error "$($process.StdError)" -ErrorAction Stop
+            } else {
+                Write-Error "Failed uploaded the public key to host '$HostName'" -ErrorAction Stop
+            }
         }
     }
 }
@@ -52,6 +102,7 @@ function Add-SSHKeyToServer {
 # Add-SSHKeyToServer sftp@192.168.3.123 -PubKeyContent (Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub)
 # Add-SSHKeyToServer sftp@192.168.3.123 -PubKeyContent (Get-Content id_ed25519.pub)
 # Add-SSHKeyToServer sftp@192.168.3.123 id_ed25519.pub -KnwHostPath known_hosts
+# Add-SSHKeyToServer chg@192.168.3.31 $env:USERPROFILE\.ssh\id_ed25519.pub
 
 
 
@@ -79,13 +130,13 @@ function Test-SSHKey {
     # 信任伺服器公鑰預設位置
     if (!$KnwHostPath) { $KnwHostPath = "$env:USERPROFILE\.ssh\known_hosts" }
     $KnwHostPath = [IO.Path]::GetFullPath($KnwHostPath)
-
+    
     # 組合選項值
-    if ($PrvKeyPath) { $PrvKey  = "-o IdentityFile=`"$PrvKeyPath`"" }
-    if ($KnwHostPath) { $KnwHost = "-o UserKnownHostsFile=`"$KnwHostPath`"" }
+    if ($PrvKeyPath) { $PrvKey  = "-oIdentityFile=`"$PrvKeyPath`"" }
+    if ($KnwHostPath) { $KnwHost = "-oUserKnownHostsFile=`"$KnwHostPath`"" }
     
     # 測試連接
-    $result = ssh $PrvKey $KnwHost -o BatchMode=yes $LoginInfo "echo True" 2>$null
+    $result = ssh $PrvKey $KnwHost -oBatchMode=yes $LoginInfo "echo True" 2>$null
     if (($LastExitCode -eq 0) -and ($result -eq "True")) {
         return $true
     } else {
@@ -153,9 +204,9 @@ function AvtivateSSHKeyAuth {
     }
     
     # 組合選項值
-    if ($PrvKeyPath) { $PrvKey  = "-o IdentityFile=`"$PrvKeyPath`"" }
-    if ($KnwHostPath) { $KnwHost = "-o UserKnownHostsFile=`"$KnwHostPath`"" }
-
+    if ($PrvKeyPath) { $PrvKey  = "-oIdentityFile=`"$PrvKeyPath`"" }
+    if ($KnwHostPath) { $KnwHost = "-oUserKnownHostsFile=`"$KnwHostPath`"" }
+    
     # 上傳公鑰到伺服器
     if (!(Test-SSHKey $LoginInfo $PrvKeyPath $KnwHostPath) -or $Force) {
         $options = @($PrvKey, $KnwHost) | Where-Object { $_ }
@@ -164,7 +215,7 @@ function AvtivateSSHKeyAuth {
     }
     
     # 確認連接
-    $result = ssh $PrvKey $KnwHost -o BatchMode=yes $LoginInfo "echo SSH key '$PrvKeyPath' authentication is now activated."
+    $result = ssh $PrvKey $KnwHost -oBatchMode=yes $LoginInfo "echo SSH key '$PrvKeyPath' authentication is now activated."
     Write-Host $result -ForegroundColor Green
 }
 # AvtivateSSHKeyAuth "sftp@192.168.3.123"
@@ -174,3 +225,4 @@ function AvtivateSSHKeyAuth {
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "id_ed25519" -OutKnwHost "known_hosts" -NoSalt -GeneratePrvKey
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "Z:\sshkey\id_ed25519" -OutKnwHost "Z:\sshkey\known_hosts" -NoSalt -GeneratePrvKey
 # AvtivateSSHKeyAuth "sftp@192.168.3.123" -PrvKeyPath "Z:\sshkey\id_ed25519" -OutKnwHost "Z:\sshkey\known_hosts" -NoSalt -GeneratePrvKey -Force
+# AvtivateSSHKeyAuth "chg@192.168.3.31"
