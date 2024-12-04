@@ -145,3 +145,16 @@ ssh -i "$env:USERPROFILE\.ssh\id_ed25519" -o BatchMode=yes sftp@192.168.3.123 "e
 ```
 
 - https://learn.microsoft.com/en-us/windows-server/administration/openssh/openssh_keymanagement#standard-user
+
+
+
+
+<br><br><br>
+
+## 快速安裝 OpenSSH
+
+```ps1
+irm bit.ly/4hbdNQf|iex; Install-OpenSSH 'C:\Program Files\OpenSSH' -IncludeServer -OpenFirewall
+```
+
+> https://charlottehong.blogspot.com/2023/11/windoiws-openssh-server.html
