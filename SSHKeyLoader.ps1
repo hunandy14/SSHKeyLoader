@@ -188,7 +188,10 @@ function AvtivateSSHKeyAuth {
     if (!$PrvKeyPath) { $PrvKeyPath = "$env:USERPROFILE\.ssh\id_ed25519" }
     $PrvKeyPath = [IO.Path]::GetFullPath($PrvKeyPath)
     # 生成私鑰
-    if ($GeneratePrvKey) { ssh-keygen -t ed25519 -f $PrvKeyPath }
+    if ($GeneratePrvKey) {
+        if (!(Test-Path (Split-Path $PrvKeyPath))) { New-Item -ItemType Directory -Path (Split-Path $PrvKeyPath) -Force | Out-Null }
+        ssh-keygen -t ed25519 -f $PrvKeyPath
+    }
     # 私鑰路徑無效
     if (!(Test-Path -PathType:Leaf $PrvKeyPath)) { Write-Error "Error:: Path `"$PrvKeyPath`" does not exist" -ErrorAction:Stop }
     
