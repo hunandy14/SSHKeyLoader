@@ -18,10 +18,12 @@
             "$env:USERPROFILE\.ssh\id_ecdsa",
             "$env:USERPROFILE\.ssh\id_ed25519"
         ) |Where-Object { Test-Path -PathType:Leaf $_ } |Select-Object -First 1
-    }
+    }; if (!$PrvKeyPath) { $PrvKeyPath = "$env:USERPROFILE\.ssh\id_ed25519" }
     $PrvKeyPath = [IO.Path]::GetFullPath($PrvKeyPath)
+
     # Generating public/private ed25519 key pair
     if ($GeneratePrvKey) { ssh-keygen -t ed25519 -f $PrvKeyPath }
+    
     # Check PrvKeyPath
     if (!(Test-Path -PathType:Leaf $PrvKeyPath)) { Write-Error "Error:: Path `"$PrvKeyPath`" does not exist" -ErrorAction:Stop }
 
