@@ -12,13 +12,24 @@ irm bit.ly/3Zlkg2p|iex; AvtivateSSHKeyAuth "sftp@192.168.3.123" -GeneratePrvKey
 > 產生新的金鑰並自動上傳到目標伺服器 (已經存在會詢問是否覆蓋)
 
 
+<br>
+
 測試連接
 ```ps1
 ssh -i "$env:USERPROFILE\.ssh\id_ed25519" -o BatchMode=yes "sftp@192.168.3.123" "echo Connect successful."
 ```
+
 ```ps1
 ssh -i "$env:USERPROFILE\.ssh\id_ed25519" -o UserKnownHostsFile="$env:USERPROFILE\.ssh\known_hosts" -o BatchMode=yes "sftp@192.168.3.123" "echo Connect successful."
 ```
+
+<br>
+
+安裝 OpenSSH
+```ps1
+irm bit.ly/4hbdNQf|iex; Install-OpenSSH 'C:\Program Files\OpenSSH' -IncludeServer -OpenFirewall
+```
+
 
 
 <br><br><br>
