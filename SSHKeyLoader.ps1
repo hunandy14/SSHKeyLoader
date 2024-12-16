@@ -83,15 +83,13 @@ function Add-SSHKeyToServer {
         
         # 上傳公鑰
         Write-Host "Public Key Content: $PubKeyContent" -ForegroundColor DarkGray
-        $process = Invoke-CommandInfo ssh @OptionCmd -oBatchMode=yes $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr `"$SearchContent`" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr `"$SearchContent`" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
-        if($process.ExitCode -eq 0) {
+
+        # 執行 SSH 命令
+        ssh @OptionCmd $LoginInfo "whoami /groups | findstr /C:S-1-5-32-544 >nul && ((findstr `"$SearchContent`" C:\ProgramData\ssh\administrators_authorized_keys >nul || (echo $PubKeyContent>>C:\ProgramData\ssh\administrators_authorized_keys)) && (icacls.exe C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant Administrators:F /grant SYSTEM:F >nul)) || ((if not exist .ssh mkdir .ssh) && (findstr `"$SearchContent`" .ssh\authorized_keys >nul || (echo $PubKeyContent>>.ssh\authorized_keys)))"
+        if($LastExitCode -eq 0) {
             Write-Host "Successfully uploaded the public key to host '$HostName'." -ForegroundColor Green
         } else {
-            if ($process.StdError) {
-                Write-Error "$($process.StdError)" -ErrorAction Stop
-            } else {
-                Write-Error "Failed uploaded the public key to host '$HostName'" -ErrorAction Stop
-            }
+            Write-Error "Failed uploaded the public key to host '$HostName'." -ErrorAction Stop
         }
     }
 }
@@ -103,6 +101,7 @@ function Add-SSHKeyToServer {
 # Add-SSHKeyToServer sftp@192.168.3.123 -PubKeyContent (Get-Content id_ed25519.pub)
 # Add-SSHKeyToServer sftp@192.168.3.123 id_ed25519.pub -KnwHostPath known_hosts
 # Add-SSHKeyToServer chg@192.168.3.31 $env:USERPROFILE\.ssh\id_ed25519.pub
+# Add-SSHKeyToServer user@localhost $env:USERPROFILE\.ssh\id_ed25519.pub
 
 
 
